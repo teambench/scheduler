@@ -49,6 +49,7 @@
     <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="reg-title">
       <h2 id="reg-title">Sign up</h2>
       <div class="reg-summary" id="reg-summary"></div>
+      <div class="reg-role-desc" id="reg-role-desc"></div>
       <form id="register-form" novalidate>
         <label class="field">
           <span>Full name</span>
@@ -80,6 +81,30 @@
           <button type="submit" class="btn btn-primary" id="reg-submit">Confirm sign-up</button>
         </div>
         <div class="form-msg" id="reg-msg"></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Cancel signup modal -->
+  <div class="modal-root" id="cancel-modal" hidden>
+    <div class="modal-backdrop" data-close></div>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="cancel-title">
+      <h2 id="cancel-title">Cancel sign-up</h2>
+      <div class="reg-summary" id="cancel-summary"></div>
+      <p class="cancel-hint">
+        Enter the email you used when signing up to confirm cancellation.
+        This will remove you from the team and free the slot for someone else.
+      </p>
+      <form id="cancel-form" novalidate>
+        <label class="field">
+          <span>Your email</span>
+          <input required type="email" name="email" autocomplete="email" />
+        </label>
+        <div class="form-actions">
+          <button type="button" class="btn btn-ghost" data-close>Keep my sign-up</button>
+          <button type="submit" class="btn btn-danger" id="cancel-submit">Cancel my sign-up</button>
+        </div>
+        <div class="form-msg" id="cancel-msg"></div>
       </form>
     </div>
   </div>

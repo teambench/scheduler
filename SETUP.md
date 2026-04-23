@@ -69,20 +69,20 @@ in the UI, but nobody gets an email. To enable automatic emails:
 
 ### Suggested EmailJS template
 
-Subject: `TeamBench session booked — {{session_when}}`
+Subject: `TeamBench — {{session_when}} ({{role}})`
 
 Body:
 
 ```
 Hi {{to_name}},
 
-Your TeamBench team-mode session is confirmed.
+{{status_line}}
 
   When:       {{session_when}}  ({{session_when_utc}})
   Your role:  {{role}}
 
-Your teammates:
-  Planner:  {{planner_name}} <{{planner_email}}>
+Team:
+  Planner:  {{planner_name}}  <{{planner_email}}>
   Executor: {{executor_name}} <{{executor_email}}>
   Verifier: {{verifier_name}} <{{verifier_email}}>
 
@@ -97,6 +97,30 @@ roles can sync up before the timer starts.
 
 In the template settings, set **To Email** to `{{to_email}}` and **From
 Name** to something like `TeamBench Scheduler`.
+
+**Template variables used:**
+
+| Variable | Filled with |
+|---|---|
+| `{{to_email}}`, `{{to_name}}` | Recipient |
+| `{{role}}` | `planner` / `executor` / `verifier` |
+| `{{status_line}}` | e.g. `"You're signed up as planner. Waiting on 2 more people..."` or `"Your team of three is complete — you're all set!"` |
+| `{{session_when}}`, `{{session_when_utc}}` | Human-readable start time in the visitor's tz and UTC |
+| `{{session_url}}` | Base URL from `emailjs-config.js` (e.g. the human-eval app) |
+| `{{planner_name}}` / `{{planner_email}}` (+ executor / verifier) | Each teammate's name/email, or `(pending)` if that seat isn't filled yet |
+
+### When emails are sent
+
+1. **Every sign-up** — the person who just signed up gets a confirmation
+   email immediately. If they're the first or second to join, it says
+   "waiting on X more." If they complete the team, it says the team is
+   complete.
+2. **Team completion** — the two teammates who joined earlier *also* get
+   a team-complete email at that moment (the person who completed the
+   team already got theirs in step 1).
+3. **Cancellation** — no email is sent. The UI shows a toast; the person
+   who cancelled knows, and the remaining teammates just see the seat
+   re-open on their next page load.
 
 ## 3. Add the secrets to GitHub
 
