@@ -377,6 +377,10 @@ select:focus, input:focus {
   justify-content: center;
   z-index: 60;
 }
+/* Without this, our explicit `display: flex` overrides the user-agent
+   `[hidden] { display: none }` rule and the modal stays on screen even
+   after JS sets `hidden = true`. */
+.modal-root[hidden] { display: none; }
 .modal-backdrop {
   position: absolute; inset: 0;
   background: rgba(20, 24, 34, 0.45);
