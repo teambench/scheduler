@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>TeamBench Scheduler</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">T</span>
+      <div>
+        <div class="brand-title">TeamBench Scheduler</div>
+        <div class="brand-sub">Book a 30-min Team-mode session</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <label class="control">
+        <span class="control-label">Time zone</span>
+        <select id="tz-select"></select>
+      </label>
+      <button id="roles-help" class="btn btn-ghost" type="button">Role descriptions</button>
+    </div>
+  </header>
+
+  <section class="intro">
+    <p>
+      Team mode runs with three people — a <b>Planner</b>, <b>Executor</b>, and <b>Verifier</b> — collaborating
+      for 30 minutes on a coding task. Pick any open slot and your role. When all three seats are filled,
+      everyone gets an email with the session details.
+    </p>
+  </section>
+
+  <nav class="dateStrip" aria-label="Select a date">
+    <button class="date-nav" id="date-prev" aria-label="Previous week">&lsaquo;</button>
+    <div class="date-track" id="date-track"></div>
+    <button class="date-nav" id="date-next" aria-label="Next week">&rsaquo;</button>
+  </nav>
+
+  <main class="day-grid" id="day-grid" aria-live="polite">
+    <!-- time slots injected here -->
+  </main>
+
+  <!-- Registration modal -->
+  <div class="modal-root" id="register-modal" hidden>
+    <div class="modal-backdrop" data-close></div>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="reg-title">
+      <h2 id="reg-title">Sign up</h2>
+      <div class="reg-summary" id="reg-summary"></div>
+      <form id="register-form" novalidate>
+        <label class="field">
+          <span>Full name</span>
+          <input required name="name" autocomplete="name" />
+        </label>
+        <label class="field">
+          <span>Email</span>
+          <input required type="email" name="email" autocomplete="email" />
+        </label>
+        <label class="field">
+          <span>Institution</span>
+          <input required name="institution" list="institution-list" autocomplete="organization" />
+          <datalist id="institution-list">
+            <option>MIT</option>
+            <option>University of Washington</option>
+            <option>Google</option>
+            <option>Stanford</option>
+            <option>CMU</option>
+            <option>UC Berkeley</option>
+            <option>Seoul National University</option>
+            <option>KAIST</option>
+            <option>POSTECH</option>
+            <option>Korea University</option>
+            <option>Yonsei University</option>
+          </datalist>
+        </label>
+        <div class="form-actions">
+          <button type="button" class="btn btn-ghost" data-close>Cancel</button>
+          <button type="submit" class="btn btn-primary" id="reg-submit">Confirm sign-up</button>
+        </div>
+        <div class="form-msg" id="reg-msg"></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Roles help modal -->
+  <div class="modal-root" id="roles-modal" hidden>
+    <div class="modal-backdrop" data-close></div>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="roles-title">
+      <h2 id="roles-title">The three roles</h2>
+      <ol class="role-list">
+        <li>
+          <div class="role-chip role-planner">Planner</div>
+          <p>
+            Owns the plan and decides the approach. <b>Does not edit code.</b> Communicates the plan to the
+            Executor via chat and adjusts strategy based on what the Verifier reports.
+          </p>
+        </li>
+        <li>
+          <div class="role-chip role-executor">Executor</div>
+          <p>
+            The only role that can edit code and run commands in the terminal. Implements the Planner's
+            instructions and responds to fix-requests from the Verifier.
+          </p>
+        </li>
+        <li>
+          <div class="role-chip role-verifier">Verifier</div>
+          <p>
+            Reviews the Executor's code, runs tests, and decides whether the solution is correct. Can send
+            the work back to the Executor for fixes until the criteria are met.
+          </p>
+        </li>
+      </ol>
+      <div class="form-actions">
+        <button type="button" class="btn btn-primary" data-close>Got it</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast" hidden></div>
+
+  <footer class="foot">
+    <span>Times shown in <span id="foot-tz">local</span> · Sessions are 30&nbsp;minutes</span>
+    <span class="foot-right">
+      <a href="https://teambench.github.io/human-eval/" target="_blank" rel="noopener">About TeamBench</a>
+    </span>
+  </footer>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>

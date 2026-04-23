@@ -1,0 +1,72 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Inject Firebase API key
+        env:
+          FIREBASE_API: ${{ secrets.FIREBASE_API }}
+        run: |
+          if [ -z "$FIREBASE_API" ]; then
+            echo "::error::FIREBASE_API secret is not set. Add it under Settings → Secrets and variables → Actions."
+            exit 1
+          fi
+          # Use a sentinel delimiter so any slashes / special chars in the
+          # secret don't break the substitution.
+          python3 -c "
+          import os, pathlib
+          p = pathlib.Path('firebase-config.js')
+          p.write_text(p.read_text().replace('__FIREBASE_API__', os.environ['FIREBASE_API']))
+          "
+
+      - name: Inject EmailJS credentials (optional)
+        env:
+          EMAILJS_PUBLIC_KEY:  ${{ secrets.EMAILJS_PUBLIC_KEY }}
+          EMAILJS_SERVICE_ID:  ${{ secrets.EMAILJS_SERVICE_ID }}
+          EMAILJS_TEMPLATE_ID: ${{ secrets.EMAILJS_TEMPLATE_ID }}
+        run: |
+          # Any missing secret leaves the placeholder in place — the app
+          # detects that pattern at runtime and disables email sending.
+          python3 -c "
+          import os, pathlib
+          p = pathlib.Path('emailjs-config.js')
+          s = p.read_text()
+          for key in ('EMAILJS_PUBLIC_KEY', 'EMAILJS_SERVICE_ID', 'EMAILJS_TEMPLATE_ID'):
+              v = os.environ.get(key, '')
+              if v:
+                  s = s.replace(f'__{key}__', v)
+          p.write_text(s)
+          "
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # Entire repo root is the site — no build step.
+          path: .
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
