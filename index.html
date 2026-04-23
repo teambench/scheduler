@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>TeamBench Scheduler</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Ctext%20y='.9em'%20font-size='90'%3E%F0%9F%93%85%3C/text%3E%3C/svg%3E" />
   <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
@@ -21,23 +22,28 @@
         <span class="control-label">Time zone</span>
         <select id="tz-select"></select>
       </label>
-      <button id="roles-help" class="btn btn-ghost" type="button">Role descriptions</button>
     </div>
   </header>
 
   <section class="intro">
     <p>
       Team mode runs with three people — a <b>Planner</b>, <b>Executor</b>, and <b>Verifier</b> — collaborating
-      for 30 minutes on a coding task. Pick any open slot and your role. When all three seats are filled,
-      everyone gets an email with the session details.
+      for 30 minutes on a coding task. Pick a day below, then claim an open role at any time slot. When all
+      three seats are filled, everyone gets an email with the session details.
     </p>
   </section>
 
-  <nav class="dateStrip" aria-label="Select a date">
-    <button class="date-nav" id="date-prev" aria-label="Previous week">&lsaquo;</button>
-    <div class="date-track" id="date-track"></div>
-    <button class="date-nav" id="date-next" aria-label="Next week">&rsaquo;</button>
-  </nav>
+  <section class="calendar" aria-label="Select a date">
+    <div class="cal-head">
+      <button class="cal-nav" id="cal-prev" type="button" aria-label="Previous month">&lsaquo;</button>
+      <div class="cal-title" id="cal-title"></div>
+      <button class="cal-nav" id="cal-next" type="button" aria-label="Next month">&rsaquo;</button>
+    </div>
+    <div class="cal-weekdays" aria-hidden="true">
+      <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+    </div>
+    <div class="cal-grid" id="cal-grid" role="grid"></div>
+  </section>
 
   <main class="day-grid" id="day-grid" aria-live="polite">
     <!-- time slots injected here -->

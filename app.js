@@ -66,8 +66,8 @@ const state = {
   tz: detectInitialTz(),
   // Selected local date in the chosen timezone (YYYY-MM-DD).
   selectedLocalDate: null,
-  // Window of dates shown in the top strip — starts on the first date shown.
-  stripStart: null,
+  // Month currently displayed in the calendar, as {y, m} (1-indexed).
+  displayMonth: null,
   // Full data snapshot: { slotKeyUTC: { teams: { teamId: {...} } } }
   slots: {},
   // Modal context: { slotKeyUTC, role, teamId|null }
@@ -86,12 +86,12 @@ function cachedEmail() {
 const $ = (sel) => document.querySelector(sel);
 const el = {
   tz: $("#tz-select"),
-  dateTrack: $("#date-track"),
-  datePrev: $("#date-prev"),
-  dateNext: $("#date-next"),
+  calGrid: $("#cal-grid"),
+  calPrev: $("#cal-prev"),
+  calNext: $("#cal-next"),
+  calTitle: $("#cal-title"),
   grid: $("#day-grid"),
   footTz: $("#foot-tz"),
-  rolesHelp: $("#roles-help"),
   rolesModal: $("#roles-modal"),
   regModal: $("#register-modal"),
   regForm: $("#register-form"),
@@ -200,70 +200,132 @@ el.tz.addEventListener("change", () => {
   // Preserve the user's rough date intent — snap to same calendar day in new tz.
   if (!state.selectedLocalDate) state.selectedLocalDate = dateKey(new Date(), state.tz);
   el.footTz.textContent = formatTzShort(state.tz);
-  renderDateStrip();
+  renderCalendar();
   renderDay();
 });
 
-// ─── Date strip ──────────────────────────────────────────────────────────
+// ─── Month calendar ──────────────────────────────────────────────────────
 
-// Returns an array of DAYS_AHEAD {date, key, dow, dd, m, y} entries, one per
-// consecutive *local* calendar day in the chosen timezone. `date` is the
-// UTC instant of midnight-local for that day. Advances by calendar day
-// (not by a fixed 24-hour chunk) so DST boundaries don't duplicate or
-// skip a date — on US fall-back days a naive `+24h` drifts into the
-// previous day in the tz.
-function buildDateList() {
-  const out = [];
-  const nowTzParts = partsInTz(new Date(), state.tz);
-  let y = +nowTzParts.y, m = +nowTzParts.m, d = +nowTzParts.dd;
-  for (let i = 0; i < DAYS_AHEAD; i++) {
-    const midnightUtc = localToUtc(y, m, d, 0, 0, state.tz);
-    const p = partsInTz(midnightUtc, state.tz);
-    out.push({ date: midnightUtc, key: p.dateKey, dow: p.dow, dd: p.dd, m: p.m, y: p.y });
-    // Advance one local calendar day; normalize via Date.UTC to handle
-    // month/year rollover (e.g. Dec 31 → Jan 1).
-    d += 1;
-    const norm = new Date(Date.UTC(y, m - 1, d, 12, 0, 0));
-    y = norm.getUTCFullYear();
-    m = norm.getUTCMonth() + 1;
-    d = norm.getUTCDate();
-  }
-  return out;
+const DOW_INDEX = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+const MONTH_NAMES = [
+  "January","February","March","April","May","June",
+  "July","August","September","October","November","December",
+];
+
+// Normalize a (y, m, d) triple after adding `delta` days in the local
+// calendar — uses Date.UTC for the rollover math (noon to dodge DST).
+function addLocalDays(y, m, d, delta) {
+  const norm = new Date(Date.UTC(y, m - 1, d + delta, 12, 0, 0));
+  return {
+    y: norm.getUTCFullYear(),
+    m: norm.getUTCMonth() + 1,
+    d: norm.getUTCDate(),
+  };
 }
 
-function renderDateStrip() {
-  const dates = buildDateList();
-  // Default selection: today.
-  if (!state.selectedLocalDate) state.selectedLocalDate = dates[0].key;
-  el.dateTrack.innerHTML = "";
-  const todayKey = dates[0].key;
-  for (const d of dates) {
-    const pill = document.createElement("button");
-    pill.type = "button";
-    pill.className = "date-pill";
-    if (d.key === todayKey) pill.classList.add("is-today");
-    if (d.key === state.selectedLocalDate) pill.classList.add("is-selected");
-    pill.innerHTML = `
-      <div class="dp-dow">${d.dow}</div>
-      <div class="dp-day">${+d.dd}</div>
-      <div class="dp-sub">${monthShort(+d.m)}</div>`;
-    pill.addEventListener("click", () => {
-      state.selectedLocalDate = d.key;
-      renderDateStrip();
-      renderDay();
+// Build a 6-row × 7-col calendar grid for the given month in the chosen tz.
+// Returns 42 cells, some in the previous/next month (flagged inMonth:false).
+function buildMonthView(year, month) {
+  // Find the weekday of the 1st of the month in the chosen tz. Use midnight
+  // as the canonical instant; partsInTz gives us the correct local weekday.
+  const firstMidUtc = localToUtc(year, month, 1, 0, 0, state.tz);
+  const firstDow = DOW_INDEX[partsInTz(firstMidUtc, state.tz).dow] ?? 0;
+
+  const cells = [];
+  let cur = addLocalDays(year, month, 1, -firstDow);
+  for (let i = 0; i < 42; i++) {
+    const midUtc = localToUtc(cur.y, cur.m, cur.d, 0, 0, state.tz);
+    const p = partsInTz(midUtc, state.tz);
+    cells.push({
+      date: midUtc,
+      key: p.dateKey,
+      day: +p.dd,
+      inMonth: +p.m === month,
     });
-    el.dateTrack.appendChild(pill);
+    cur = addLocalDays(cur.y, cur.m, cur.d, 1);
   }
-  // Scroll the selected pill into view.
-  const selected = el.dateTrack.querySelector(".is-selected");
-  if (selected) selected.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+  return cells;
 }
-el.datePrev.addEventListener("click", () => { el.dateTrack.scrollBy({ left: -300, behavior: "smooth" }); });
-el.dateNext.addEventListener("click", () => { el.dateTrack.scrollBy({ left: 300, behavior: "smooth" }); });
 
-function monthShort(m) {
-  return ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][m - 1];
+// Default display: today's month in the chosen tz. Navigation is bounded so
+// users can't wander away from the ~2-month booking window.
+function defaultDisplayMonth() {
+  const p = partsInTz(new Date(), state.tz);
+  return { y: +p.y, m: +p.m };
 }
+function monthFloor(y, m) { return y * 12 + (m - 1); }
+function monthsDiff(a, b) { return monthFloor(b.y, b.m) - monthFloor(a.y, a.m); }
+
+function renderCalendar() {
+  if (!state.displayMonth) state.displayMonth = defaultDisplayMonth();
+  const todayParts = partsInTz(new Date(), state.tz);
+  const todayKey = `${todayParts.y}-${todayParts.m}-${todayParts.dd}`;
+  if (!state.selectedLocalDate) state.selectedLocalDate = todayKey;
+
+  // Bounds: current month (can't go before it) up to the last month that
+  // contains any day within DAYS_AHEAD of today.
+  const thisMonth = defaultDisplayMonth();
+  const lastValidDate = addLocalDays(+todayParts.y, +todayParts.m, +todayParts.dd, DAYS_AHEAD - 1);
+  const maxMonth = { y: lastValidDate.y, m: lastValidDate.m };
+
+  el.calTitle.textContent = `${MONTH_NAMES[state.displayMonth.m - 1]} ${state.displayMonth.y}`;
+  el.calPrev.disabled = monthsDiff(thisMonth, state.displayMonth) <= 0;
+  el.calNext.disabled = monthsDiff(state.displayMonth, maxMonth) <= 0;
+
+  const cells = buildMonthView(state.displayMonth.y, state.displayMonth.m);
+  el.calGrid.innerHTML = "";
+  for (const c of cells) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "cal-cell";
+    if (!c.inMonth) btn.classList.add("is-out");
+    const cellTs = c.date.getTime();
+    // "Past" means before today's local date (not just earlier clock time).
+    if (c.key < todayKey) btn.classList.add("is-past");
+    if (c.key === todayKey) btn.classList.add("is-today");
+    if (c.key === state.selectedLocalDate) btn.classList.add("is-selected");
+    // Out-of-window days beyond DAYS_AHEAD are shown but not bookable.
+    const outOfWindow = c.key > lastValidDate.y + "-"
+      + String(lastValidDate.m).padStart(2, "0") + "-"
+      + String(lastValidDate.d).padStart(2, "0");
+    if (outOfWindow) btn.classList.add("is-past");
+
+    btn.innerHTML = `${c.day}<span class="cal-today-mark">today</span>`;
+
+    const clickable = !btn.classList.contains("is-out")
+                   && !btn.classList.contains("is-past");
+    if (clickable) {
+      btn.addEventListener("click", () => {
+        state.selectedLocalDate = c.key;
+        // If the click was on a neighbouring-month day, slide the calendar
+        // to that month so the selection is visible.
+        const p = c.key.split("-").map(Number);
+        if (p[1] !== state.displayMonth.m || p[0] !== state.displayMonth.y) {
+          state.displayMonth = { y: p[0], m: p[1] };
+        }
+        renderCalendar();
+        renderDay();
+      });
+    } else {
+      btn.disabled = true;
+    }
+    el.calGrid.appendChild(btn);
+  }
+}
+
+el.calPrev.addEventListener("click", () => {
+  if (!state.displayMonth) return;
+  const prev = addLocalDays(state.displayMonth.y, state.displayMonth.m, 1, -1);
+  state.displayMonth = { y: prev.y, m: prev.m };
+  renderCalendar();
+});
+el.calNext.addEventListener("click", () => {
+  if (!state.displayMonth) return;
+  // Jump to the 1st of next month.
+  const next = addLocalDays(state.displayMonth.y, state.displayMonth.m, 28, 7);
+  state.displayMonth = { y: next.y, m: next.m };
+  renderCalendar();
+});
 
 // ─── Day grid ────────────────────────────────────────────────────────────
 
@@ -510,7 +572,6 @@ for (const m of [el.regModal, el.rolesModal, el.cancelModal]) {
     if (ev.target.hasAttribute("data-close")) hideModal(m);
   });
 }
-el.rolesHelp.addEventListener("click", () => showModal(el.rolesModal));
 
 el.regForm.addEventListener("submit", async (ev) => {
   ev.preventDefault();
@@ -708,6 +769,34 @@ function emailjsReady() {
       && !isPlaceholder(emailjsConfig.templateId);
 }
 
+// Google Calendar "TEMPLATE" URL — opens Google Calendar pre-filled so the
+// recipient can click it in their email and add the session to their own
+// calendar with one click. Dates must be UTC in YYYYMMDDTHHMMSSZ format.
+function googleCalendarUrl(slotUtc, { role } = {}) {
+  const pad = n => String(n).padStart(2, "0");
+  const fmtUtc = (d) =>
+    `${d.getUTCFullYear()}${pad(d.getUTCMonth() + 1)}${pad(d.getUTCDate())}T` +
+    `${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}${pad(d.getUTCSeconds())}Z`;
+  const endUtc = new Date(slotUtc.getTime() + SESSION_MINUTES * 60 * 1000);
+  const title = role
+    ? `TeamBench Team-mode — ${role}`
+    : "TeamBench Team-mode session";
+  const details = [
+    role ? `Your role: ${role}` : "",
+    "A 30-minute TeamBench team-mode collaboration session.",
+    "Planner, Executor, and Verifier work together on one task.",
+    `Join: ${emailjsConfig.sessionBaseUrl}${role ? `?role=${role}` : ""}`,
+  ].filter(Boolean).join("\n\n");
+  const params = new URLSearchParams({
+    action: "TEMPLATE",
+    text: title,
+    dates: `${fmtUtc(slotUtc)}/${fmtUtc(endUtc)}`,
+    details,
+    location: emailjsConfig.sessionBaseUrl,
+  });
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}
+
 function buildEmailCommon(slotKey, team) {
   const slotUtc = utcSlotKeyToDate(slotKey);
   const whenLocal = `${formatDateHuman(slotUtc, state.tz)} · ${formatTime(slotUtc, state.tz)} ${formatTzShort(state.tz)}`;
@@ -724,6 +813,7 @@ function buildEmailCommon(slotKey, team) {
     session_when: whenLocal,
     session_when_utc: whenUtc,
     session_url: emailjsConfig.sessionBaseUrl,
+    slot_utc: slotUtc,
     planner_name:  team.planner?.name  || pending,
     planner_email: team.planner?.email || "",
     executor_name:  team.executor?.name  || pending,
@@ -735,12 +825,16 @@ function buildEmailCommon(slotKey, team) {
 
 async function sendOne({ to, role, common, status }) {
   const emailjs = await ensureEmailJsLoaded();
+  // gcal_url is built per-recipient so the event title + description mention
+  // the recipient's specific role when they "Add to calendar".
+  const { slot_utc, ...commonRest } = common;
   const params = {
-    ...common,
+    ...commonRest,
     to_email: to.email,
     to_name: to.name,
     role,
     status_line: status,
+    gcal_url: googleCalendarUrl(slot_utc, { role }),
   };
   await emailjs.send(emailjsConfig.serviceId, emailjsConfig.templateId, params);
 }
@@ -795,6 +889,6 @@ function subscribeToSlots() {
 // ─── Boot ────────────────────────────────────────────────────────────────
 
 renderTzSelect();
-renderDateStrip();
+renderCalendar();
 renderDay();
 subscribeToSlots();

@@ -69,9 +69,16 @@ in the UI, but nobody gets an email. To enable automatic emails:
 
 ### Suggested EmailJS template
 
-Subject: `TeamBench — {{session_when}} ({{role}})`
+> ⚠️ **Important:** EmailJS's default template is a generic "Contact Us"
+> form that uses `{{from_name}}` and `{{message}}`. If you leave that in
+> place, every email the scheduler sends will look like `"A message by
+> has been received"` with no date, role, or teammate info. You **must**
+> replace the template body with the block below.
 
-Body:
+**Subject** — `TeamBench — {{session_when}} ({{role}})`
+
+**Content** (paste into the template's Content box — plain text or HTML
+both work):
 
 ```
 Hi {{to_name}},
@@ -86,6 +93,9 @@ Team:
   Executor: {{executor_name}} <{{executor_email}}>
   Verifier: {{verifier_name}} <{{verifier_email}}>
 
+Add to Google Calendar:
+  {{gcal_url}}
+
 Join the session at:
   {{session_url}}?role={{role}}
 
@@ -95,10 +105,15 @@ roles can sync up before the timer starts.
 — TeamBench
 ```
 
-In the template settings, set **To Email** to `{{to_email}}` and **From
-Name** to something like `TeamBench Scheduler`.
+**Template settings** — on the same page, make sure:
 
-**Template variables used:**
+- **To Email:** `{{to_email}}` (not a hardcoded address — otherwise every
+  message goes to the same inbox)
+- **From Name:** something like `TeamBench Scheduler`
+- **Reply-To:** leave blank or set to a real address
+- Click **Save**
+
+**Template variables reference:**
 
 | Variable | Filled with |
 |---|---|
@@ -107,6 +122,7 @@ Name** to something like `TeamBench Scheduler`.
 | `{{status_line}}` | e.g. `"You're signed up as planner. Waiting on 2 more people..."` or `"Your team of three is complete — you're all set!"` |
 | `{{session_when}}`, `{{session_when_utc}}` | Human-readable start time in the visitor's tz and UTC |
 | `{{session_url}}` | Base URL from `emailjs-config.js` (e.g. the human-eval app) |
+| `{{gcal_url}}` | Clickable Google Calendar "Add event" link (pre-filled with title, time, role) |
 | `{{planner_name}}` / `{{planner_email}}` (+ executor / verifier) | Each teammate's name/email, or `(pending)` if that seat isn't filled yet |
 
 ### When emails are sent
