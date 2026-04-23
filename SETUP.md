@@ -25,32 +25,35 @@ human-eval app (which uses `teambench/`).
    with the values from the SDK config panel. The `apiKey` field stays as
    the `__FIREBASE_API__` placeholder — the workflow fills it in.
 
-4. In **Realtime Database → Rules**, paste the following. This opens only
-   the `scheduler/` subtree for public read/write and validates that every
-   team entry carries the required fields:
+4. In **Realtime Database → Rules**, paste the following. This opens
+   `scheduler/` for public read/write (and nothing else).
 
    ```json
    {
      "rules": {
        "scheduler": {
-         "slots": {
-           ".read": true,
-           ".write": true,
-           "$slot": {
-             "teams": {
-               "$team": {
-                 ".validate": "newData.hasChildren(['createdAt'])",
-                 "planner":  { ".validate": "newData.hasChildren(['name','email','institution'])" },
-                 "executor": { ".validate": "newData.hasChildren(['name','email','institution'])" },
-                 "verifier": { ".validate": "newData.hasChildren(['name','email','institution'])" }
-               }
-             }
-           }
-         }
+         ".read": true,
+         ".write": true
        }
      }
    }
    ```
+
+   **If you are reusing the same Firebase project as `teambench/human-eval`**,
+   merge the `scheduler` block into your existing rules so the `teambench`
+   subtree retains its own permissions. For example:
+
+   ```json
+   {
+     "rules": {
+       "teambench": { ".read": true, ".write": true },
+       "scheduler": { ".read": true, ".write": true }
+     }
+   }
+   ```
+
+   Click **Publish** after pasting. Without this step every sign-up will
+   fail with a `PERMISSION_DENIED` error in the browser console.
 
 ## 2. EmailJS (optional but recommended)
 

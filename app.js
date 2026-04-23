@@ -284,8 +284,9 @@ function renderDay() {
     const timeCell = document.createElement("div");
     timeCell.className = "slot-time";
     timeCell.innerHTML = `
-      <span class="stime-big">${formatTime(slotDate, state.tz)}</span>
-      <span class="stime-to">to ${formatTime(slotEnd, state.tz)}</span>`;
+      <span>${formatTime(slotDate, state.tz)}</span>
+      <span class="stime-sep">–</span>
+      <span>${formatTime(slotEnd, state.tz)}</span>`;
     row.appendChild(timeCell);
 
     const stack = document.createElement("div");
@@ -343,23 +344,31 @@ function renderTeamRow(parent, { slotKey, slotUtc, teamId, team, isNewTeamStub, 
     const cell = document.createElement("div");
     cell.className = `role-slot role-${role}`;
     const person = team && team[role];
-    const label = document.createElement("div");
+    const label = document.createElement("span");
     label.className = "role-label";
     label.textContent = role;
     cell.appendChild(label);
 
     if (person) {
       cell.classList.add("is-filled");
-      const nm = document.createElement("div");
-      nm.className = "person-name";
-      nm.textContent = person.name;
-      cell.appendChild(nm);
-      const meta = document.createElement("div");
-      meta.className = "person-meta";
-      meta.textContent = person.institution || "";
-      cell.appendChild(meta);
+      const line = document.createElement("span");
+      line.className = "person-line";
+      const nameSpan = document.createElement("span");
+      nameSpan.textContent = person.name;
+      line.appendChild(nameSpan);
+      if (person.institution) {
+        const inst = document.createElement("span");
+        inst.className = "person-inst";
+        inst.textContent = ` · ${person.institution}`;
+        line.appendChild(inst);
+      }
+      cell.appendChild(line);
     } else {
       cell.classList.add("is-open");
+      const action = document.createElement("span");
+      action.className = "role-action";
+      action.textContent = "Sign up";
+      cell.appendChild(action);
       cell.addEventListener("click", () =>
         openRegister({ slotKey, slotUtc, role, teamId: isNewTeamStub ? null : teamId }));
     }
@@ -369,29 +378,25 @@ function renderTeamRow(parent, { slotKey, slotUtc, teamId, team, isNewTeamStub, 
   // Status pill column.
   const status = document.createElement("div");
   status.className = "team-status";
-  if (isNewTeamStub) {
-    const hint = document.createElement("div");
-    hint.className = "team-count";
-    hint.textContent = totalTeams > 1 ? "Start a new team" : "Open slot";
-    status.appendChild(hint);
-  } else {
-    const pill = document.createElement("span");
-    pill.className = "status-pill";
-    if (filled === 3) {
-      pill.classList.add("is-complete");
-      pill.textContent = "Team formed";
-    } else {
-      pill.classList.add("is-waiting");
-      pill.textContent = `Waiting (${filled}/3)`;
-    }
-    status.appendChild(pill);
-    if (totalTeams > 1) {
-      const c = document.createElement("div");
-      c.className = "team-count";
-      c.textContent = `Team ${teamIndex + 1} of ${totalTeams}`;
-      status.appendChild(c);
-    }
+  if (totalTeams > 1) {
+    const c = document.createElement("span");
+    c.className = "team-count";
+    c.textContent = `#${teamIndex + 1}`;
+    status.appendChild(c);
   }
+  const pill = document.createElement("span");
+  pill.className = "status-pill";
+  if (isNewTeamStub) {
+    pill.classList.add("is-new");
+    pill.textContent = totalTeams > 1 ? "New team" : "Open";
+  } else if (filled === 3) {
+    pill.classList.add("is-complete");
+    pill.textContent = "Full";
+  } else {
+    pill.classList.add("is-waiting");
+    pill.textContent = `${filled}/3`;
+  }
+  status.appendChild(pill);
   row.appendChild(status);
   parent.appendChild(row);
 }

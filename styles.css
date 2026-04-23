@@ -246,23 +246,23 @@ select:focus, input:focus {
   border-radius: var(--radius);
   box-shadow: var(--shadow-sm);
   display: grid;
-  grid-template-columns: 82px 1fr;
+  grid-template-columns: 150px 1fr;
   overflow: hidden;
 }
 
 .slot-time {
   background: var(--surface-2);
-  padding: 14px 14px;
+  padding: 8px 14px;
   font-variant-numeric: tabular-nums;
-  font-size: 13.5px;
-  color: var(--text-dim);
+  font-size: 13px;
+  color: var(--text);
+  font-weight: 500;
   border-right: 1px solid var(--border);
   display: flex;
-  flex-direction: column;
-  justify-content: center;
+  align-items: center;
+  white-space: nowrap;
 }
-.slot-time .stime-big { color: var(--text); font-weight: 600; font-size: 14px; }
-.slot-time .stime-to { font-size: 11.5px; color: var(--text-muted); margin-top: 1px; }
+.slot-time .stime-sep { color: var(--text-muted); margin: 0 4px; }
 
 .team-stack {
   display: flex;
@@ -270,82 +270,99 @@ select:focus, input:focus {
 }
 .team-row {
   display: grid;
-  grid-template-columns: repeat(3, 1fr) 120px;
-  gap: 8px;
-  padding: 10px 14px;
+  grid-template-columns: repeat(3, 1fr) auto;
+  gap: 6px;
+  padding: 6px 12px;
   border-top: 1px dashed var(--border);
-  align-items: stretch;
+  align-items: center;
 }
 .team-row:first-child { border-top: none; }
 .team-row.is-complete { background: linear-gradient(0deg, rgba(31,162,104,0.05), rgba(31,162,104,0.05)); }
 
 .role-slot {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 10px 12px;
-  border-radius: 8px;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 7px;
   border: 1px solid var(--border);
+  border-left-width: 3px;
   background: var(--surface);
-  min-height: 58px;
-  position: relative;
+  min-height: 34px;
+  overflow: hidden;
 }
+.role-slot.role-planner  { border-left-color: var(--planner); }
+.role-slot.role-executor { border-left-color: var(--executor); }
+.role-slot.role-verifier { border-left-color: var(--verifier); }
+
 .role-slot.is-open {
   cursor: pointer;
-  transition: border-color 0.12s, background 0.12s, transform 0.12s;
+  transition: border-color 0.12s, background 0.12s;
 }
 .role-slot.is-open:hover {
   border-color: var(--accent);
   background: #f4f7ff;
 }
-.role-slot.is-open::after {
-  content: "Sign up";
-  position: absolute;
-  top: 50%;
-  right: 12px;
-  transform: translateY(-50%);
-  color: var(--accent);
-  font-weight: 500;
-  font-size: 12.5px;
-}
-
+.role-slot.is-open:hover.role-planner  { border-left-color: var(--planner); }
+.role-slot.is-open:hover.role-executor { border-left-color: var(--executor); }
+.role-slot.is-open:hover.role-verifier { border-left-color: var(--verifier); }
 .role-slot.is-filled { background: var(--surface-2); }
 
 .role-slot .role-label {
-  font-size: 11px;
+  font-size: 10.5px;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  font-weight: 600;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+  flex: 0 0 auto;
+  width: 60px;
 }
-.role-planner .role-label { color: var(--planner); }
-.role-executor .role-label { color: var(--executor); }
-.role-verifier .role-label { color: var(--verifier); }
+.role-slot.role-planner  .role-label { color: var(--planner); }
+.role-slot.role-executor .role-label { color: var(--executor); }
+.role-slot.role-verifier .role-label { color: var(--verifier); }
 
-.role-slot .person-name { font-weight: 500; color: var(--text); font-size: 13.5px; margin-top: 2px; }
-.role-slot .person-meta { color: var(--text-muted); font-size: 12px; }
+.role-slot .role-action {
+  color: var(--accent);
+  font-size: 12.5px;
+  font-weight: 500;
+  margin-left: auto;
+}
+.role-slot .person-line {
+  font-size: 12.5px;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+.role-slot .person-line .person-inst {
+  color: var(--text-muted);
+}
 
 .team-status {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  justify-content: center;
-  padding: 4px 2px;
-  gap: 4px;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 2px 0 2px 8px;
+  gap: 6px;
+  min-width: 110px;
 }
 .status-pill {
-  font-size: 11.5px;
-  padding: 3px 9px;
+  font-size: 11px;
+  padding: 2px 8px;
   border-radius: 999px;
   border: 1px solid var(--border);
   color: var(--text-dim);
   background: var(--surface);
+  white-space: nowrap;
 }
 .status-pill.is-waiting { color: #8a6d00; border-color: #f5e3a3; background: #fff8dc; }
 .status-pill.is-complete { color: var(--verifier); border-color: #b6e3ce; background: #e8f7ef; }
+.status-pill.is-new { color: var(--accent); border-color: #c5d0ff; background: #eef2ff; }
 
 .team-count {
-  font-size: 11px;
+  font-size: 10.5px;
   color: var(--text-muted);
+  white-space: nowrap;
 }
 
 .slot-empty-hint {
@@ -354,6 +371,10 @@ select:focus, input:focus {
   color: var(--text-muted);
 }
 
+/* Role chips — used inside modals and the reg summary. Scoped so the
+   background color does NOT leak onto .role-slot cells in the grid
+   (which previously turned the Planner slot solid blue, making the
+   blue "Planner" label invisible). */
 .role-chip {
   display: inline-block;
   padding: 3px 10px;
@@ -364,9 +385,9 @@ select:focus, input:focus {
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
-.role-planner { background: var(--planner); }
-.role-executor { background: var(--executor); }
-.role-verifier { background: var(--verifier); }
+.role-chip.role-planner  { background: var(--planner); }
+.role-chip.role-executor { background: var(--executor); }
+.role-chip.role-verifier { background: var(--verifier); }
 
 /* ─── Modal ───────────────────────────────────────────────────────────── */
 .modal-root {
