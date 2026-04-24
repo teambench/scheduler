@@ -93,6 +93,9 @@ Team:
   Executor: {{executor_name}} <{{executor_email}}>
   Verifier: {{verifier_name}} <{{verifier_email}}>
 
+Video call:
+  {{zoom_url}}
+
 Add to Google Calendar:
   {{gcal_url}}
 
@@ -123,6 +126,7 @@ roles can sync up before the timer starts.
 | `{{session_when}}`, `{{session_when_utc}}` | Human-readable start time in the visitor's tz and UTC |
 | `{{session_url}}` | Base URL from `emailjs-config.js` (e.g. the human-eval app) |
 | `{{gcal_url}}` | Clickable Google Calendar "Add event" link (pre-filled with title, time, role) |
+| `{{zoom_url}}` | Video-call link from `emailjsConfig.zoomUrl`, or empty if not set |
 | `{{planner_name}}` / `{{planner_email}}` (+ executor / verifier) | Each teammate's name/email, or `(pending)` if that seat isn't filled yet |
 
 ### When emails are sent

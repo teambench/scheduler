@@ -34,4 +34,9 @@ export const emailjsConfig = {
   // URL at the scheduled time with role=planner|executor|verifier to join
   // the actual team-mode session.
   sessionBaseUrl: "https://teambench.github.io/human-eval/",
+
+  // Personal Zoom (or other video call) link inserted as {{zoom_url}} in
+  // the email so teammates can jump on a call together. Leave blank to
+  // skip it — the template will render an empty string.
+  zoomUrl: "https://mit.zoom.us/j/91350274472",
 };

@@ -813,6 +813,7 @@ function buildEmailCommon(slotKey, team) {
     session_when: whenLocal,
     session_when_utc: whenUtc,
     session_url: emailjsConfig.sessionBaseUrl,
+    zoom_url: emailjsConfig.zoomUrl || "",
     slot_utc: slotUtc,
     planner_name:  team.planner?.name  || pending,
     planner_email: team.planner?.email || "",
