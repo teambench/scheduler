@@ -772,6 +772,11 @@ function emailjsReady() {
 // Google Calendar "TEMPLATE" URL — opens Google Calendar pre-filled so the
 // recipient can click it in their email and add the session to their own
 // calendar with one click. Dates must be UTC in YYYYMMDDTHHMMSSZ format.
+//
+// Putting the Zoom URL in `location` is the trick that makes Google
+// Calendar show a "Join with Zoom" action on the event — the TEMPLATE
+// URL API has no dedicated conference-link param, but Google auto-
+// detects zoom.us URLs in the location field and wires up the button.
 function googleCalendarUrl(slotUtc, { role } = {}) {
   const pad = n => String(n).padStart(2, "0");
   const fmtUtc = (d) =>
@@ -785,14 +790,17 @@ function googleCalendarUrl(slotUtc, { role } = {}) {
     role ? `Your role: ${role}` : "",
     "A 30-minute TeamBench team-mode collaboration session.",
     "Planner, Executor, and Verifier work together on one task.",
-    `Join: ${emailjsConfig.sessionBaseUrl}${role ? `?role=${role}` : ""}`,
+    emailjsConfig.zoomUrl ? `Video call: ${emailjsConfig.zoomUrl}` : "",
+    `Join the task: ${emailjsConfig.sessionBaseUrl}${role ? `?role=${role}` : ""}`,
   ].filter(Boolean).join("\n\n");
   const params = new URLSearchParams({
     action: "TEMPLATE",
     text: title,
     dates: `${fmtUtc(slotUtc)}/${fmtUtc(endUtc)}`,
     details,
-    location: emailjsConfig.sessionBaseUrl,
+    // Zoom URL as location → Google renders a "Join with Zoom" button.
+    // Falls back to the human-eval URL if no Zoom is configured.
+    location: emailjsConfig.zoomUrl || emailjsConfig.sessionBaseUrl,
   });
   return `https://calendar.google.com/calendar/render?${params.toString()}`;
 }
@@ -836,6 +844,11 @@ async function sendOne({ to, role, common, status }) {
     role,
     status_line: status,
     gcal_url: googleCalendarUrl(slot_utc, { role }),
+    // `title` makes the EmailJS default subject ("Contact Us: {{title}}")
+    // at least render something useful. The recommended subject is
+    // `TeamBench — {{session_when}} ({{role}})` but many users never
+    // update the stock subject, so we populate {{title}} as a fallback.
+    title: `TeamBench ${role} · ${commonRest.session_when}`,
   };
   await emailjs.send(emailjsConfig.serviceId, emailjsConfig.templateId, params);
 }
